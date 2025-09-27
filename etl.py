@@ -12,14 +12,30 @@ def extract(input_file: str) -> pd.DataFrame:
 
 
 def transform(df: pd.DataFrame) -> pd.DataFrame:
-    """Transform data by cleaning and adding a new column."""
+    """Transform data by cleaning and adding new features."""
     # Drop rows with missing values
     df = df.dropna()
 
-    # Add a new column with uppercase and lowercase names if 'name' exists
+    # Add uppercase/lowercase columns if 'name' exists
     if "name" in df.columns:
         df["name_upper"] = df["name"].str.upper()
         df["name_lower"] = df["name"].str.lower()
+        # Moderate transformation: name length
+        df["name_length"] = df["name"].str.len()
+
+    # Normalize numeric columns (0-1 scaling)
+    numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
+    for col in numeric_cols:
+        min_val = df[col].min()
+        max_val = df[col].max()
+        if max_val != min_val:
+            df[col + "_norm"] = (df[col] - min_val) / (max_val - min_val)
+        else:
+            df[col + "_norm"] = 0  # avoid division by zero
+
+    # Optional: filter rows where 'amount' > 0 if exists
+    if "amount" in df.columns:
+        df = df[df["amount"] > 0]
 
     return df
 

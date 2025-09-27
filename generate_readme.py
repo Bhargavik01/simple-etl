@@ -47,6 +47,6 @@ response = client.chat.completions.create(
     ]
 )
 
-readme_suggestion = response.choices[0].message["content"]
+readme_suggestion = response.choices[0].message.content
 print("\n✅ Suggested README update:\n")
 print(readme_suggestion)
