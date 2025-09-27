@@ -28,6 +28,9 @@ jobs:
         run: |
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep ".py$" || true)
           echo "Changed Python files: $CHANGED_FILES"
+          
+          
+          CHANGED_FILES = $(echo $CHANGED_FILES | tr '\n' ' ')
           echo "CHANGED_PY_FILES=$CHANGED_FILES" >> $GITHUB_ENV
 
       # 3️⃣ Set up Python
