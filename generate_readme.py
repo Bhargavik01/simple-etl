@@ -1,12 +1,14 @@
 import os
 from openai import OpenAI
 import subprocess
+from datetime import datetime
 
-# Read changed Python files from environment
+# Read changed Python files from GitHub Actions env
 changed_files = os.getenv("CHANGED_PY_FILES", "").split()
 print("🔍 Debug: CHANGED_PY_FILES =", changed_files)
+
 if not changed_files or changed_files == [""]:
-    print("ℹ️ No Python files changed. Skipping README suggestion.")
+    print("ℹ️ No Python files changed. Skipping README update.")
     exit(0)
 
 print(f"🔹 Changed Python files: {changed_files}")
@@ -14,7 +16,7 @@ print(f"🔹 Changed Python files: {changed_files}")
 # Initialize OpenAI client using GitHub secret
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Prepare a diff of changed files
+# Prepare diffs of changed files
 diff_texts = []
 for f in changed_files:
     if os.path.exists(f):
@@ -22,13 +24,16 @@ for f in changed_files:
             diff = subprocess.check_output(["git", "diff", f], text=True)
             diff_texts.append(diff)
         except subprocess.CalledProcessError:
-            pass
+            print(f"⚠️ Could not get diff for {f}, skipping.")
 
 diff_text = "\n\n".join(diff_texts)
+if not diff_text.strip():
+    print("ℹ️ No diffs found. Skipping README update.")
+    exit(0)
 
-# Call GPT to generate README suggestion
+# GPT prompt
 prompt = f"""
-You are a helpful assistant. Generate a concise and clear README.md update 
+You are a helpful assistant. Generate a concise README.md update 
 based on the following code changes. Suggest new sections or update existing ones:
 
 {diff_text}
@@ -42,21 +47,22 @@ response = client.chat.completions.create(
     ]
 )
 
-readme_suggestion = response.choices[0].message.content
+readme_suggestion = response.choices[0].message.content.strip()
 print("✅ GPT README suggestion generated:\n")
 print(readme_suggestion)
 
-# Append suggestion to README.md only if it doesn't already exist
+# Prepare update content with timestamp
 readme_file = "README.md"
-if os.path.exists(readme_file):
-    with open(readme_file, "r", encoding="utf-8") as f:
-        readme_content = f.read()
-else:
-    readme_content = ""
+timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+update_content = f"\n\n## GPT Suggested Update ({timestamp})\n{readme_suggestion}\n"
 
-if readme_suggestion.strip() in readme_content:
-    print("ℹ️ Suggestion already exists in README.md. Skipping append.")
-else:
-    with open(readme_file, "a", encoding="utf-8") as f:
-        f.write("\n\n" + readme_suggestion)
-    print(f"\n📄 Updated {readme_file} successfully.")
+# Ensure README.md exists
+if not os.path.exists(readme_file):
+    with open(readme_file, "w", encoding="utf-8") as f:
+        f.write("# Project\n")
+
+# Append update unconditionally
+with open(readme_file, "a", encoding="utf-8") as f:
+    f.write(update_content)
+
+print(f"📄 Updated {readme_file} successfully.")
