@@ -19,6 +19,7 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     # Add a new column with uppercase names if 'name' exists
     if "name" in df.columns:
         df["name_upper"] = df["name"].str.upper()
+        df["name_lower"] = df["name"].str.lower()
 
     return df
 
@@ -39,4 +40,3 @@ if __name__ == "__main__":
     transformed = transform(data)
     load(transformed, output_path)
 
-    print(f"✅ ETL process complete. Output saved to {output_path}")
