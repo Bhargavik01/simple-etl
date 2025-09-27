@@ -36,6 +36,7 @@ if __name__ == "__main__":
     # Run ETL
     print("Hello Github Actions!")
     print("🔹 Starting ETL process...")
+    print("----------------")
 
     data = extract(input_path)
     transformed = transform(data)
