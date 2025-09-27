@@ -15,22 +15,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0   # fetch full history so HEAD~1 exists
 
       - name: List changed files
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔹 Changed files in this push/PR:"
-          
-          # Get list of files from the last commit
-          git fetch origin main
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
-          
-          echo "$CHANGED_FILES"
-
-          # Optional: check if any .py files changed
-          if echo "$CHANGED_FILES" | grep -q ".py$"; then
-            echo "✅ Python code changed."
-          else
-            echo "ℹ️ No Python code changes."
-          fi
+          # Skip diff if first commit
+          COMMIT_COUNT=$(git rev-list --count HEAD)
+          if [ "$COMMIT_COUNT" -eq 1 ]; then
