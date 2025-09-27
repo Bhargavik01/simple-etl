@@ -8,12 +8,15 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write  # Needed for committing back to repo
+
 jobs:
   suggest-readme:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repo with full history
+      # 1️⃣ Checkout repository with full history
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
@@ -23,11 +26,8 @@ jobs:
       - name: Detect changed Python files
         id: detect
         run: |
-          # Get Python files changed in this push/PR
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep ".py$" || true)
           echo "Changed Python files: $CHANGED_FILES"
-
-          # Save for next steps
           echo "CHANGED_PY_FILES=$CHANGED_FILES" >> $GITHUB_ENV
 
       # 3️⃣ Set up Python
@@ -42,7 +42,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install openai pandas python-dotenv
 
-      # 5️⃣ Run GPT README script if Python files changed
+      # 5️⃣ Generate README suggestion
       - name: Generate README suggestion
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -53,12 +53,13 @@ jobs:
           else
             echo "✅ Python files changed: $CHANGED_PY_FILES"
             python generate_readme.py
-          fi
+
+      # 6️⃣ Commit and push README changes (only if new suggestion added)
       - name: Commit and push README changes
         if: success() && env.CHANGED_PY_FILES != ''
         run: |
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add README.md
-            git diff --quiet && echo "No changes to commit" || git commit -m "Update README.md based on code changes"
-            git push origin HEAD:${{ github.ref }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --quiet || git commit -m "Update README.md based on code changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:${{ github.ref }}
