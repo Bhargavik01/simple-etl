@@ -26,11 +26,18 @@ jobs:
       - name: Detect changed Python files
         id: detect
         run: |
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep ".py$" || true)
-          echo "Changed Python files: $CHANGED_FILES"
-          
-          
-          CHANGED_FILES=$(echo $CHANGED_FILES | tr '\n' ' ')
+          # Handle first commit
+          if [ "$(git rev-list --count HEAD)" -eq 1 ]; then
+            CHANGED_FILES=$(git ls-tree --name-only -r HEAD | grep ".py$" || true)
+          else
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep ".py$" || true)
+          fi
+
+          # Collapse into single line (space-separated)
+          CHANGED_FILES=$(echo "$CHANGED_FILES" | tr '\n' ' ')
+          echo "Changed Python files: \"$CHANGED_FILES\""
+
+          # Export for next steps
           echo "CHANGED_PY_FILES=$CHANGED_FILES" >> $GITHUB_ENV
 
       # 3️⃣ Set up Python
@@ -51,10 +58,13 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           CHANGED_PY_FILES: ${{ env.CHANGED_PY_FILES }}
         run: |
+          # Default empty if somehow missing
+          CHANGED_PY_FILES="${CHANGED_PY_FILES:-}"
+
           if [ -z "$CHANGED_PY_FILES" ]; then
             echo "ℹ️ No Python files changed. Skipping README suggestion."
           else
-            echo "✅ Python files changed: $CHANGED_PY_FILES"
+            echo "✅ Python files changed: \"$CHANGED_PY_FILES\""
             python generate_readme.py
           fi
 
