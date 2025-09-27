@@ -29,10 +29,6 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
         else:
             df[col + "_norm"] = 0  # avoid division by zero
 
-    # Optional: filter rows where 'amount' > 0 if exists
-    if "amount" in df.columns:
-        df = df[df["amount"] > 0]
-
     return df
 
 
