@@ -25,3 +25,19 @@ jobs:
           # Skip diff if first commit
           COMMIT_COUNT=$(git rev-list --count HEAD)
           if [ "$COMMIT_COUNT" -eq 1 ]; then
+            echo "First commit, nothing to diff."
+            exit 0
+          fi
+
+          echo "🔹 Changed files in this push/PR:"
+
+          # Get list of files from the last commit
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "$CHANGED_FILES"
+
+          # Optional: check if any .py files changed
+          if echo "$CHANGED_FILES" | grep -q ".py$"; then
+            echo "✅ Python code changed."
+          else
+            echo "ℹ️ No Python code changes."
+          fi
