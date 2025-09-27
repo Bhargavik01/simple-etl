@@ -1,7 +1,3 @@
-"""
-Simple ETL script
-Extracts data from a CSV, transforms it, and loads it into another CSV.
-"""
 
 import pandas as pd
 
