@@ -4,7 +4,7 @@ import subprocess
 
 # Read changed Python files from environment
 changed_files = os.getenv("CHANGED_PY_FILES", "").split()
-
+print("🔍 Debug: CHANGED_PY_FILES =", changed_files)
 if not changed_files or changed_files == [""]:
     print("ℹ️ No Python files changed. Skipping README suggestion.")
     exit(0)
